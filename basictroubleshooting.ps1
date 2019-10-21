@@ -93,7 +93,7 @@ do {
         elseif ($answer -eq '3') {
             $outpath = "C:\Users\" + $env:username + "\Desktop\ITRsupport.exe"
             Invoke-WebRequest -Uri "https://www.itrelation.dk/Admin/Public/DWSDownload.aspx?File=%2fFiles%2fFiles%2fITRsupport.exe" -OutFile $outpath
-            Write-Host "Teamviewer is not located at: $($outpath)"
+            Write-Host "Teamviewer is now located at: $($outpath)"
             }
 
 
