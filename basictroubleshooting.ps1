@@ -39,7 +39,7 @@ Write-Host $legpresult
 }
 
 
-if ($daysup -ge 0) {
+if ($daysup -ge 1) {
     do { $myInput = (Read-Host $msgForInput).ToLower() } while ($myInput -notin @('y','n'))
     if ($myInput -eq 'y') {
         write-host "You've selected 'Yes'. Remember to reboot after turning off Fast Start-Up"
