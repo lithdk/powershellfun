@@ -98,3 +98,5 @@ do {
 
 
  } until ($answer -eq '9')
+ 
+  Write-host "Exiting script..."
