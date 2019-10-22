@@ -43,6 +43,9 @@ cls
     $legpresult = gpresult /r | out-string
     }
     $daysup = $leuptimecalc.days
+    $eventCritical= Get-WinEvent -maxevents 20 -FilterHashtable @{Logname='System', 'Application','application';Level=1;StartTime=[datetime]::Now.AddMonths(-1)} -ErrorAction SilentlyContinue | out-string
+    $eventError = Get-WinEvent -maxevents 10 -FilterHashtable @{Logname='System', 'Application','application';Level=2;StartTime=[datetime]::Now.AddMonths(-1)} -ErrorAction SilentlyContinue | out-string
+
 
     Write-Host "`n`n"
     Write-Host $leuptimeout
@@ -61,7 +64,9 @@ cls
     Write-Host "`nGPresult:"
     Write-Host $legpresult
     }
-
+    Write-Host "20 latest system 'Critical' Events: $($eventCritical)"
+    Write-Host "10 latest system 'Error' Events: $($eventError)"
+    
     $msgForLeaveBasicInfoInput = "Do you want to go back to the main menu? (Y)"
     do { $myInput = (Read-Host $msgForLeaveBasicInfoInput).ToLower() } while ($myInput -notin @('y'))
         if ($myInput -eq 'y') {
@@ -187,3 +192,6 @@ function downloadTW {
 }
 
 main
+
+#Oneliner to run:
+#$basictroubleshooting = Invoke-WebRequest https://raw.githubusercontent.com/lithdk/powershellfun/master/basictroubleshooting.ps1; Invoke-Expression $($basictroubleshooting.content)
