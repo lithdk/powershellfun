@@ -1,10 +1,27 @@
 #Main, doesnt need a description
 function main {
+if (!$isAdmin) { #Check if variable has been set, if not we set it
+$myWindowsID=[System.Security.Principal.WindowsIdentity]::GetCurrent()
+$myWindowsPrincipal=new-object System.Security.Principal.WindowsPrincipal($myWindowsID)
+$adminRole=[System.Security.Principal.WindowsBuiltInRole]::Administrator
+if ($myWindowsPrincipal.IsInRole($adminRole)) #Checks if principal running PoSh is an administrator
+   {
+   $isAdmin = $true
+   }
+else
+   {
+   $isAdmin = $false
+   }
+}
+
+#Lé menu
+if ($isAdmin -eq $true) { write-host "** ADMIN **`nBe responsible" }
 write-host "`n--- MAIN MENU ---"
 write-host "Enter your selection, 9 to quit"
 write-host "1. Collect basic info"
 write-host "2. Run QuickTest"
 write-host "3. Go to QuickFix menu"
+write-host "4. Download Teamviewer to desktop"
 write-host "`n9. Exit`n"
 
 do {
@@ -22,12 +39,16 @@ do {
         quickFix    
         }
 
+        elseif ($answer -eq '4') {
+        downloadTW    
+        }
+
         elseif ($answer -eq '9') {exit}
 
  } until ($answer -eq 'QUITFFS')
 }
 
-#Function to gather basic PC info and produce output on sreen
+#Function to gather basic PC info and produce output on screen
 function basicInfo {
 cls
     $leuptimecalc = (Get-Date) - ((Get-WmiObject win32_operatingsystem).ConvertToDateTime((Get-WmiObject win32_operatingsystem).lastbootuptime))
@@ -83,22 +104,24 @@ cls
     #Check for domain-trust and prompt for fix
     $partOfDomain = (Get-WmiObject -Class Win32_Computersystem).PartOfDomain
     if ($partOfDomain -eq $true) {
+    Write-Host "Testing Domain-Trust"
     $ledomaintrust = Test-ComputerSecureChannel
-    }
-    if ($ledomaintrust -eq $false) {
-        $msgForTrustInput = "Domain trust is 'FALSE', do you want to attempt to repair it? (Have admin credentials ready) (Y/N)"
-        do { $myInput = (Read-Host $msgForTrustInput).ToLower() } while ($myInput -notin @('y','n'))
-        if ($myInput -eq 'y') {
-            write-host "You've selected 'Yes'."
-            Test-ComputerSecureChannel -Repair -Credential (Get-Credential)
-            $myinput = "A" #reset
-        } else {
-            write-host "You've selected 'No'."
-            $myinput = "A" #reset
+        if ($ledomaintrust -eq $false) {
+            $msgForTrustInput = "Domain trust is 'FALSE', do you want to attempt to repair it? (Have admin credentials ready) (Y/N)"
+            do { $myInput = (Read-Host $msgForTrustInput).ToLower() } while ($myInput -notin @('y','n'))
+            if ($myInput -eq 'y') {
+                write-host "You've selected 'Yes'."
+                Test-ComputerSecureChannel -Repair -Credential (Get-Credential)
+                $myinput = "A" #reset
+            } else {
+                write-host "You've selected 'No'."
+                $myinput = "A" #reset
+            }
         }
     }
 
     #Check for uptime and prompt for reboot
+    Write-Host "Testing system-uptime"
     $leuptimecalc = (Get-Date) - ((Get-WmiObject win32_operatingsystem).ConvertToDateTime((Get-WmiObject win32_operatingsystem).lastbootuptime))
     $daysup = $leuptimecalc.days
     $msgForUpInput = "System uptime is greater than " + $daysup + " days. Turning off Fast Start-Up and rebooting might fix your problem. Do you want to open Power Options? (Y/N)"
@@ -131,7 +154,7 @@ write-host "`n--- QuickFix MENU ---"
 write-host "Enter your selection, 9 to go back to the main menu"
 write-host "1. Enable ADAL"
 write-host "2. Disable ADAL"
-write-host "3. Download Teamviewer to desktop"
+write-host "3. Clear credential manager"
 write-host "`n9. Main Menu`n"
 
 do {
@@ -144,9 +167,9 @@ do {
         elseif ($QFanswer -eq '2') {
         adalSwitch "disable"
         }
-        
+
         elseif ($QFanswer -eq '3') {
-        downloadTW    
+        clearCredMan
         }
 
         elseif ($QFanswer -eq '9') {cls; main}
@@ -189,6 +212,22 @@ function downloadTW {
       Invoke-WebRequest -Uri "https://www.itrelation.dk/Admin/Public/DWSDownload.aspx?File=%2fFiles%2fFiles%2fITRsupport.exe" -OutFile $outpath
       Write-Host "Teamviewer is now located at: $($outpath)"
 
+}
+
+#Clear credential manager
+function clearCredMan {
+do {
+    $clearCredManAnswer = (read-host "Are you sure you want to clear the ENTIRE credential manger? (Y/N)").ToLower()
+        if ($clearCredManAnswer -eq "y") {
+        cmdkey /list | ForEach-Object{if($_ -like "*Target:*"){cmdkey /del:($_ -replace " ","" -replace "Target:","")}}
+        Write-Host -NoNewLine "Credential manager cleared. Press any key to continue..."
+        $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+        quickFix
+        }
+        elseif ($clearCredManAnswer -eq "n") {
+        quickFix
+        }
+    } until ($clearCredManAnswer -eq 'QUITFFS')
 }
 
 main
